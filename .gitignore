@@ -1,0 +1,6 @@
+# Carpeta con archivos para borrar (no se sube)
+_para_borrar/
+
+# Archivos que crea Windows
+Thumbs.db
+desktop.ini

@@ -1,0 +1,1003 @@
+/**
+ * IN MARE COPAS — LANDING
+ * Idea: "la noche con su neón". Los colores salen de sus fotos: el
+ * violeta-azul oscuro de las paredes, la luz violeta de las tiras LED, el
+ * azul de las baldas de la barra y el blanco de las molduras.
+ * Lo único llamativo es el letrero de neón de la portada, que dice cómo
+ * está el local esta noche y se enciende una vez al cargar. El resto, quieto.
+ * La carta va sobre "su pared": blanca, con moldura.
+ *
+ * Patrones de Modern Web Guidance (Chrome): menú móvil con <dialog> y
+ * scroll-snap, cabecera sólida con animación ligada al scroll,
+ * font-size-adjust y movimiento reducido tratado caso a caso.
+ */
+
+@font-face {
+  font-family: "Tilt Neon";
+  src: url("../fonts/tilt-neon-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* Archivo variable: peso (100-900) y anchura (62-125 %) en un solo archivo */
+@font-face {
+  font-family: "Archivo";
+  src: url("../fonts/archivo-variable.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+}
+
+/* Necesario para que el fondo del panel móvil se funda al arrastrar */
+@property --drawer-backdrop {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Colores sacados de sus fotos */
+  --night: #170f28;      /* paredes de noche: fondo */
+  --night-2: #20163a;    /* secciones alternas y tarjetas */
+  --text: #efe8f7;
+  --muted: #b9acd0;
+  --line: #3a2e57;
+  --neon: #c77dff;       /* tiras LED violetas: botones y letrero */
+  --neon-light: #d59cff;
+  --cyan: #5fdcea;       /* luz de las baldas de la barra: detalles */
+  --amber: #f2c46d;      /* avisos de la demo */
+  --wall: #f4f1f8;       /* molduras blancas: la carta */
+  --wall-ink: #1d1630;
+  --wall-muted: #5d5470;
+  --moulding: #cfc6dc;
+
+  /* Tipografías y su altura de x (medida en los archivos): el texto no salta al cargar */
+  --font-sign: "Tilt Neon", "Segoe UI", system-ui, sans-serif;
+  --font-sign-adjust: 0.517;
+  --font-text: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --font-text-adjust: 0.526;
+
+  --gap: clamp(1.25rem, 3.5vw, 2.5rem);
+  --pad-section: clamp(4.5rem, 9vw, 7.5rem);
+  --container: 1200px;
+  --header-h: 76px;
+  --radius: 6px;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+html {
+  scroll-padding-block-start: var(--header-h);
+  -webkit-text-size-adjust: 100%;
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Con el panel móvil abierto, la página de detrás no se desplaza */
+html:has(.drawer[open]) {
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-text);
+  font-size-adjust: var(--font-text-adjust);
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--night);
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  display: block;
+  max-inline-size: 100%;
+  block-size: auto;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+  font-size-adjust: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------------
+ * Utilidades
+ * ------------------------------------------------------------------- */
+.container {
+  inline-size: 100%;
+  max-inline-size: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gap);
+}
+
+.visually-hidden:where(:not(:focus-within, :active)) {
+  position: absolute !important;
+  clip-path: inset(50%) !important;
+  overflow: hidden !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+.skip-link {
+  position: absolute;
+  inset-inline-start: 1rem;
+  inset-block-start: 1rem;
+  z-index: 300;
+  padding: 0.8rem 1.2rem;
+  background: var(--neon);
+  color: var(--night);
+  font-weight: 650;
+  text-decoration: none;
+  translate: 0 -6rem;
+}
+
+.skip-link:focus {
+  translate: 0 0;
+}
+
+.icon {
+  inline-size: 1.15em;
+  block-size: 1.15em;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Títulos: Archivo ancha y gruesa, como el rótulo de su logo */
+.title {
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  font-weight: 750;
+  font-stretch: 118%;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-wrap: balance;
+}
+
+.section {
+  padding-block: var(--pad-section);
+}
+
+.section--alt {
+  background: var(--night-2);
+}
+
+/* Avisos para la demo (lo que hay que confirmar con el local) */
+.sample-note {
+  display: inline-block;
+  margin-block: 1.4rem 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px dashed var(--amber);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  color: var(--amber);
+}
+
+.sample-note--light {
+  border-color: #8a5300;
+  color: #8a5300;
+}
+
+/* ---------------------------------------------------------------------
+ * Botones
+ * ------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-block-size: 50px;
+  padding: 0.75rem 1.5rem;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  font-weight: 650;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.btn--neon {
+  background: var(--neon);
+  color: var(--night);
+}
+
+.btn--neon:hover {
+  background: var(--neon-light);
+}
+
+.btn--line {
+  border-color: var(--muted);
+  color: var(--text);
+}
+
+.btn--line:hover {
+  border-color: var(--text);
+  background: rgb(255 255 255 / 0.06);
+}
+
+/* ---------------------------------------------------------------------
+ * Logo: ancla + nombre (como su cartel)
+ * ------------------------------------------------------------------- */
+.logo {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  justify-content: start;
+  justify-self: start;
+  column-gap: 0.55rem;
+  align-items: center;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.logo__anchor {
+  grid-row: span 2;
+  inline-size: 30px;
+  block-size: 30px;
+  color: var(--neon-light);
+}
+
+.logo__name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-stretch: 125%;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+.logo__place {
+  font-size: 0.8rem;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------------
+ * Cabecera: transparente arriba; sólida al bajar 40 px (animación ligada
+ * al scroll; sin soporte, el JS añade .is-scrolled)
+ * ------------------------------------------------------------------- */
+.site-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  block-size: var(--header-h);
+}
+
+.site-header.is-scrolled {
+  background-color: var(--night);
+  box-shadow: 0 1px 0 var(--line);
+}
+
+@keyframes header-solid {
+  to {
+    background-color: var(--night);
+    box-shadow: 0 1px 0 var(--line);
+  }
+}
+
+@supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
+  .site-header {
+    animation: header-solid linear both;
+    animation-timeline: scroll(block root);
+    animation-range: 0px 40px;
+  }
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 2.4vw, 2rem);
+}
+
+.site-nav__list {
+  list-style: none;
+  display: flex;
+  gap: clamp(1rem, 2vw, 1.8rem);
+}
+
+.site-nav__list a {
+  display: inline-block;
+  padding-block: 0.4rem;
+  font-size: 0.98rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--text);
+  text-underline-offset: 0.35em;
+}
+
+.site-nav__list a:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--neon);
+}
+
+.site-nav__cta {
+  min-block-size: 44px;
+  padding: 0.5rem 1.2rem;
+}
+
+.menu-btn {
+  display: none;
+  align-items: center;
+  gap: 0.7rem;
+  min-block-size: 48px;
+  padding: 0.4rem 0.2rem 0.4rem 0.6rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.menu-btn__bars {
+  display: grid;
+  align-content: space-between;
+  inline-size: 22px;
+  block-size: 9px;
+}
+
+.menu-btn__bars span {
+  block-size: 1.5px;
+  background: currentColor;
+}
+
+/* El punto de corte coincide con el del JS (960 px) */
+@media (width < 960px) {
+  .site-nav {
+    display: none;
+  }
+  .menu-btn {
+    display: inline-flex;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Panel móvil (<dialog> + scroll-snap): entra por la derecha
+ * ------------------------------------------------------------------- */
+.drawer {
+  --drawer-width: min(22.5rem, 88dvw, 100dvw - 24px);
+  inset: 0;
+  inline-size: auto;
+  block-size: auto;
+  max-inline-size: none;
+  max-block-size: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  overflow: visible;
+  color: var(--text);
+}
+
+.drawer::backdrop {
+  background: #000;
+  opacity: calc(var(--drawer-backdrop) * 0.6);
+}
+
+.drawer__scroller {
+  display: grid;
+  grid-template-columns: 100% var(--drawer-width);
+  block-size: 100%;
+  overflow-x: scroll;
+  overscroll-behavior: none;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .drawer__scroller {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Hueco vacío: la parada "cerrado" */
+.drawer__scroller::before {
+  content: "";
+  scroll-snap-align: start;
+}
+
+.drawer__sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  block-size: 100svh;
+  padding: 1rem 1.8rem 2rem;
+  overflow-y: auto;
+  background: var(--night-2);
+  border-inline-start: 1px solid var(--line);
+  scrollbar-width: none;
+  scroll-snap-align: end;
+}
+
+.drawer__top {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer__close {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-block-size: 48px;
+  padding-inline: 0.6rem 0.2rem;
+  font-weight: 600;
+}
+
+.drawer__close .icon {
+  inline-size: 22px;
+  block-size: 22px;
+}
+
+.drawer__list {
+  list-style: none;
+}
+
+.drawer__list a {
+  display: block;
+  padding-block: 0.8rem;
+  font-size: 1.7rem;
+  font-weight: 700;
+  font-stretch: 115%;
+  line-height: 1.2;
+  text-decoration: none;
+  border-block-end: 1px solid var(--line);
+}
+
+.drawer__phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block-start: auto;
+  min-block-size: 48px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  .drawer {
+    timeline-scope: --drawer-fade;
+    animation: drawer-fade linear both;
+    animation-timeline: --drawer-fade;
+  }
+
+  .drawer__scroller {
+    scroll-timeline: --drawer-fade x;
+  }
+
+  @keyframes drawer-fade {
+    0% { --drawer-backdrop: 0; }
+    100% { --drawer-backdrop: 1; }
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Portada: el letrero de neón
+ * ------------------------------------------------------------------- */
+.hero {
+  padding-block: calc(var(--header-h) + clamp(1.5rem, 5vh, 3.5rem)) clamp(3rem, 6vw, 5rem);
+}
+
+/* En escritorio, la portada entera cabe en la pantalla */
+@media (width >= 900px) {
+  .hero {
+    --hero-pad: clamp(1rem, 3svh, 2.5rem);
+    --hero-img-h: clamp(320px, calc(100svh - var(--header-h) - 2 * var(--hero-pad)), 780px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-block-size: 100svh;
+    padding-block: calc(var(--header-h) + var(--hero-pad)) var(--hero-pad);
+  }
+}
+
+.hero__inner {
+  display: grid;
+  gap: clamp(2.5rem, 6vw, 5rem);
+  align-items: center;
+}
+
+@media (width >= 900px) {
+  .hero__inner {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+}
+
+/*
+ * El letrero: letra de tubo de neón con un brillo hecho de varias sombras
+ * (una cerca, nítida, y otras más abiertas y suaves).
+ */
+.neon {
+  font-family: var(--font-sign);
+  font-size-adjust: var(--font-sign-adjust);
+  font-weight: 400;
+  font-size: clamp(3rem, 8.5vw, 6.6rem);
+  line-height: 1.02;
+  letter-spacing: 0.005em;
+  color: #fbf3ff;
+  text-wrap: balance;
+  text-shadow:
+    0 0 0.03em #fff,
+    0 0 0.12em var(--neon),
+    0 0 0.32em var(--neon),
+    0 0 0.8em rgb(199 125 255 / 0.55);
+}
+
+@media (width >= 900px) {
+  .neon {
+    font-size: clamp(3.2rem, min(6.6vw, 11svh), 6.6rem);
+  }
+}
+
+/*
+ * Se enciende una sola vez al cargar, con dos parpadeos suaves (nunca más
+ * de tres destellos por segundo ni de oscuro total a claro). Si se ha
+ * pedido menos movimiento, aparece encendido directamente.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes neon-on {
+    0% { opacity: 0.15; text-shadow: none; }
+    30% { opacity: 1; }
+    40% { opacity: 0.6; }
+    55% { opacity: 1; }
+    68% { opacity: 0.8; }
+    100% { opacity: 1; }
+  }
+
+  .neon {
+    animation: neon-on 1.6s var(--ease) 0.2s both;
+  }
+}
+
+.hero__lead {
+  max-inline-size: 46ch;
+  margin-block-start: 1.6rem;
+  font-size: clamp(1.08rem, 1.5vw, 1.2rem);
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+.hero__lead strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-block-start: 2rem;
+}
+
+.hero__photo {
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+
+.hero__photo img {
+  inline-size: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+
+@media (600px <= width < 900px) {
+  .hero__photo img {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+@media (width >= 900px) {
+  .hero__photo {
+    block-size: var(--hero-img-h);
+  }
+  .hero__photo img {
+    block-size: 100%;
+    aspect-ratio: auto;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Música y DJ
+ * ------------------------------------------------------------------- */
+.music {
+  display: grid;
+  gap: clamp(2.5rem, 6vw, 5rem);
+  align-items: center;
+}
+
+@media (width >= 900px) {
+  .music {
+    grid-template-columns: 0.8fr 1.2fr;
+  }
+}
+
+.music__photo {
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+
+.music__photo img {
+  inline-size: 100%;
+  aspect-ratio: 9 / 11;
+  object-fit: cover;
+}
+
+.music__text > p:not(.sample-note) {
+  max-inline-size: 52ch;
+  margin-block-start: 1.2rem;
+  color: var(--muted);
+}
+
+.nights {
+  margin-block-start: 1rem;
+}
+
+.nights__row {
+  display: grid;
+  gap: 0.2rem 1.5rem;
+  padding-block: 1rem;
+  border-block-start: 1px solid var(--line);
+}
+
+@media (width >= 600px) {
+  .nights__row {
+    grid-template-columns: 15rem 1fr;
+  }
+}
+
+.nights dt {
+  font-weight: 650;
+}
+
+.nights dd {
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------------
+ * Carta: sobre la pared blanca, con su moldura (dos líneas, como la boiserie)
+ * ------------------------------------------------------------------- */
+.section--wall {
+  background: var(--wall);
+  color: var(--wall-ink);
+}
+
+.section--wall :focus-visible {
+  outline-color: #6b2aa8;
+}
+
+.panel {
+  padding: clamp(2rem, 5vw, 4rem);
+  border: 1px solid var(--moulding);
+  outline: 1px solid var(--moulding);
+  outline-offset: -12px;
+}
+
+.panel .title {
+  color: var(--wall-ink);
+}
+
+.panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+  padding-block-end: 1.5rem;
+  border-block-end: 1px solid var(--moulding);
+}
+
+.panel__head .sample-note {
+  margin: 0;
+}
+
+.menu {
+  display: grid;
+  gap: 2.5rem clamp(2rem, 5vw, 4rem);
+  margin-block-start: 2rem;
+}
+
+@media (width >= 900px) {
+  .menu {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.menu__group h3 {
+  margin-block-end: 0.6rem;
+  font-size: 1.35rem;
+  font-weight: 750;
+  font-stretch: 112%;
+}
+
+.menu__group ul {
+  list-style: none;
+}
+
+/* Nombre y precio en la primera línea; la descripción debajo */
+.menu__group li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.1rem 1rem;
+  padding-block: 0.7rem;
+  border-block-start: 1px solid var(--moulding);
+}
+
+.menu__item {
+  font-weight: 550;
+}
+
+.menu__price {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.menu__desc {
+  flex-basis: 100%;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--wall-muted);
+}
+
+/* ---------------------------------------------------------------------
+ * Cumpleaños y celebraciones
+ * ------------------------------------------------------------------- */
+.party {
+  display: grid;
+  gap: clamp(2.5rem, 5vw, 4rem);
+  align-items: center;
+}
+
+@media (width >= 900px) {
+  .party {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+}
+
+.party__photo {
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+
+.party__photo img {
+  inline-size: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+
+.party__text > p {
+  max-inline-size: 48ch;
+  margin-block-start: 1.2rem;
+  color: var(--muted);
+}
+
+.party__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-block-start: 2rem;
+}
+
+.party__text .party__small {
+  margin-block-start: 0.9rem;
+  font-size: 0.92rem;
+}
+
+/* ---------------------------------------------------------------------
+ * Fotos: rejilla con piezas de distinto tamaño, como entrar y mirar
+ * ------------------------------------------------------------------- */
+.gallery {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(0.8rem, 2vw, 1.4rem);
+  margin-block-start: clamp(2rem, 4vw, 3rem);
+}
+
+@media (width >= 900px) {
+  .gallery {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.gallery__item--wide {
+  grid-column: span 2;
+}
+
+.gallery figure {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.gallery img {
+  inline-size: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+
+.gallery__item--wide img {
+  /* dos columnas (más el hueco entre ellas) con la misma altura que una
+     foto vertical 3:4: 2 × 3/4 de ancho más un poco por el hueco */
+  aspect-ratio: 25 / 16;
+}
+
+.gallery figcaption {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------------
+ * Horario y cómo llegar
+ * ------------------------------------------------------------------- */
+.visit {
+  display: grid;
+  gap: clamp(2.5rem, 5vw, 4rem);
+  align-items: start;
+}
+
+@media (width >= 900px) {
+  .visit {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.hours {
+  position: relative;
+  inline-size: 100%;
+  max-inline-size: 560px;
+  margin-block-start: 1.8rem;
+  border-collapse: collapse;
+}
+
+.hours th,
+.hours td {
+  padding-block: 0.95rem;
+  border-block-start: 1px solid var(--line);
+  vertical-align: top;
+  text-align: start;
+  font-weight: 400;
+}
+
+.hours th {
+  padding-inline-end: 1rem;
+}
+
+.hours td {
+  text-align: end;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* La fila de esta noche (la marca el JS) */
+.hours tr.is-today th,
+.hours tr.is-today td {
+  color: var(--cyan);
+  font-weight: 650;
+}
+
+.hours__today {
+  margin-inline-start: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.place {
+  padding: clamp(1.6rem, 3vw, 2.2rem);
+  border-radius: var(--radius);
+  background: var(--night-2);
+  border: 1px solid var(--line);
+}
+
+.place h3 {
+  margin-block-end: 1rem;
+  font-size: 1.5rem;
+  font-weight: 750;
+  font-stretch: 112%;
+}
+
+.place address {
+  font-style: normal;
+}
+
+.place__list {
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+  margin-block: 1.2rem 1.6rem;
+}
+
+.place__list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-block-size: 44px;
+  text-decoration: none;
+}
+
+.place__list a:hover {
+  color: var(--cyan);
+}
+
+/* ---------------------------------------------------------------------
+ * Pie
+ * ------------------------------------------------------------------- */
+.site-footer {
+  padding-block: 3rem 2rem;
+  border-block-start: 1px solid var(--line);
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.site-footer__inner {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.logo--footer {
+  margin-block-end: 0.6rem;
+}
+
+.site-footer a {
+  color: var(--text);
+}
+
+.site-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin-block-start: 2.5rem;
+  padding-block-start: 1.5rem;
+  border-block-start: 1px solid var(--line);
+}
+
+.site-footer__legal nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.site-footer__legal a {
+  display: inline-block;
+  min-block-size: 44px;
+  padding-block: 0.6rem;
+  color: var(--muted);
+}
